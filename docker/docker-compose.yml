@@ -1,0 +1,29 @@
+version: "3.9"
+services:
+  charon-sim:
+    build:
+      context: ..
+      dockerfile: docker/node/Dockerfile
+    volumes:
+      - ../simulations/results:/charon/simulations/results
+    environment:
+      - SIM_CONFIG=ER_baseline
+    command: >
+      ./build/charon_sim
+        -u Cmdenv
+        -f simulations/scenarios/omnetpp.ini
+        -c ${SIM_CONFIG:-ER_baseline}
+
+  charon-ripple:
+    build:
+      context: ..
+      dockerfile: docker/node/Dockerfile
+    volumes:
+      - ../simulations/results:/charon/simulations/results
+    environment:
+      - SIM_CONFIG=Ripple_subsampled
+    command: >
+      ./build/charon_sim
+        -u Cmdenv
+        -f simulations/scenarios/omnetpp.ini
+        -c ${SIM_CONFIG:-Ripple_subsampled}
