@@ -16,3 +16,11 @@ target_include_directories(charon_sim PRIVATE src)
 target_link_libraries(charon_sim
     OpenSSL::SSL OpenSSL::Crypto
     oppsim oppenvir oppcmdenv)
+    
+# Ripple NED generator (standalone tool, no OMNeT++ needed)
+add_executable(generate_ripple_ned
+    src/topology/generate_ripple_ned.cpp
+    src/topology/RippleLoader.cpp
+    src/crypto/crypto.cpp)
+target_include_directories(generate_ripple_ned PRIVATE src)
+target_link_libraries(generate_ripple_ned OpenSSL::SSL OpenSSL::Crypto)
