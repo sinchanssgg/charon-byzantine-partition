@@ -14,16 +14,10 @@ Charon is the first strictly-stabilizing Byzantine fault-tolerant algorithm for 
 - [Key Concepts](#key-concepts)
 - [Project Structure](#project-structure)
 - [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Building the Project](#building-the-project)
-- [Running Simulations](#running-simulations)
-- [Running with Docker](#running-with-docker)
 - [Topologies](#topologies)
 - [Byzantine Behaviors](#byzantine-behaviors)
 - [Algorithm Parameters](#algorithm-parameters)
 - [VS Code Setup](#vs-code-setup)
-- [Implementation Status](#implementation-status)
-- [Contributing](#contributing)
 - [License](#license)
 
 ---
@@ -359,12 +353,4 @@ A `.vscode/tasks.json` is included with these pre-configured tasks accessible vi
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
----
 
-## References
-
-1. Bromberg et al. — *Partition Detection in Byzantine Networks*, ICDCS 2024
-2. Nesterenko and Arora — *Tolerance to Unbounded Byzantine Faults*, SRDS 2002
-3. Dijkstra — *Self-Stabilizing Systems in Spite of Distributed Control*, CACM 1974
-4. Dolev — *Unanimity in an Unknown and Unreliable Environment*, FOCS 1981
-5. Byrenheid et al. — *Attack-Resistant Spanning Tree Construction*, SRDS 2019
