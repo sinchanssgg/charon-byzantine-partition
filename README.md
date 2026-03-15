@@ -187,45 +187,6 @@ This produces two executables:
 ```
 build/charon_sim            # Main OMNeT++ simulation
 build/generate_ripple_ned   # Ripple topology NED generator
-```
-
----
-
-## Running Simulations
-
-### ER Graph baseline
-```bash
-./build/charon_sim \
-    -u Cmdenv \
-    -f simulations/scenarios/omnetpp.ini \
-    -c ER_baseline
-```
-
-### Ripple topology
-
-First generate the NED file from a CSV edge list:
-```bash
-# Download the dataset
-mkdir -p simulations/data
-cd simulations/data
-wget https://snap.stanford.edu/data/soc-sign-bitcoin-alpha.csv.gz
-gunzip soc-sign-bitcoin-alpha.csv.gz
-cd ../..
-
-# Generate NED file
-# Arguments: <csv> <output.ned> [maxNodes] [t] [c] [deltaMax]
-./build/generate_ripple_ned \
-    simulations/data/soc-sign-bitcoin-alpha.csv \
-    simulations/scenarios/RippleNetwork.ned \
-    5000 50 5 8
-
-# Run simulation
-./build/charon_sim \
-    -u Cmdenv \
-    -f simulations/scenarios/omnetpp.ini \
-    -c Ripple_subsampled \
-    -n simulations/scenarios
-```
 
 ### Available simulation configurations
 
@@ -255,19 +216,6 @@ docker compose -f docker/docker-compose.yml up --build
 SIM_CONFIG=Ripple_subsampled \
     docker compose -f docker/docker-compose.yml up --build charon-sim
 ```
-
-### Open a shell inside a running container
-```bash
-docker compose -f docker/docker-compose.yml exec charon-sim bash
-```
-
-### Developing inside the container (VS Code Dev Containers)
-
-1. Install the **Remote - Containers** extension in VS Code
-2. Press `Ctrl+Shift+P` → **Remote-Containers: Reopen in Container**
-3. VS Code will rebuild the image and reconnect inside it — all terminals and tools run inside the container from that point
-
----
 
 ## Topologies
 
@@ -397,46 +345,6 @@ A `.vscode/tasks.json` is included with these pre-configured tasks accessible vi
 
 ---
 
-## Implementation Status
-
-| Component | Status | Notes |
-|---|---|---|
-| Beacon struct and signing | ✅ Complete | ECDSA via OpenSSL |
-| Token struct and Accept | ✅ Complete | All five conditions |
-| Core round logic (6 steps) | ✅ Complete | Algorithm 1 |
-| Assess and BFS reachability | ✅ Complete | Algorithm 2 |
-| Vertex connectivity (max-flow) | ✅ Complete | Dinic's algorithm, three-tier strategy |
-| Byzantine behavior B1 (silent) | ✅ Complete | |
-| Byzantine behavior B2 (selective fwd) | ✅ Complete | |
-| Byzantine behavior B3 (stale replay) | ✅ Complete | |
-| Byzantine behavior B4 (token flood) | ✅ Complete | |
-| OMNeT++ serialization | ✅ Complete | Binary wire format |
-| OMNeT++ module integration | ✅ Complete | Gate mapping, signal recording |
-| Ripple topology loader | ✅ Complete | CSV loader with churn support |
-| Ripple NED generator | ✅ Complete | Standalone tool |
-
----
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-```bash
-git checkout -b feature/your-feature-name
-```
-
-3. Commit your changes
-```bash
-git add .
-git commit -m "Add: description of your change"
-```
-
-4. Push to your fork
-```bash
-git push origin feature/your-feature-name
-```
-
-5. Open a Pull Request on GitHub
 
 ### Code style
 
