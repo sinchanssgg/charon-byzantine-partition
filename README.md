@@ -351,6 +351,6 @@ A `.vscode/tasks.json` is included with these pre-configured tasks accessible vi
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+The repo is private. Please do not share, all right reserved.
 
 
