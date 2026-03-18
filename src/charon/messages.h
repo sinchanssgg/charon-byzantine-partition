@@ -1,66 +1,116 @@
-#include "crypto.h"
-#include <sstream>
-#include <openssl/ec.h>
-#include <openssl/ecdsa.h>
-#include <openssl/obj_mac.h>
-#include <openssl/sha.h>
-#include <map>
+#pragma once
+#include "../crypto/crypto.h"
+#include <vector>
+#include <string>
 
 namespace charon {
 
-// In a real deployment, each node holds a persistent EC key pair.
-// Here we generate deterministic keys from node IDs for simulation.
-static std::map<NodeId, EC_KEY*> keyStore;
+// ============================================================================
+//  Beacon  —  β_i^r = (i, r, σ_i(i‖r))
+//
+//  Signed per-round liveness broadcast. The round number is included in
+//  the signature so beacons cannot be replayed in later rounds.
+// ============================================================================
+struct Beacon {
+    NodeId sender;
+    Round  round;
+    Sig    sig;       // σ_i(i ‖ r)
 
-static EC_KEY* getKey(NodeId id) {
-    if (keyStore.count(id)) return keyStore[id];
-    EC_KEY* key = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
-    EC_KEY_generate_key(key);
-    keyStore[id] = key;
-    return key;
-}
+    // Returns true iff the signature is valid for this sender and round.
+    bool valid() const {
+        return verify(sender, concat(sender, round), sig);
+    }
 
-Sig sign(NodeId i, const std::string& m) {
-    EC_KEY* key = getKey(i);
-    unsigned char hash[SHA256_DIGEST_LENGTH];
-    SHA256(reinterpret_cast<const unsigned char*>(m.data()), m.size(), hash);
-    unsigned int sigLen = ECDSA_size(key);
-    std::vector<unsigned char> sig(sigLen);
-    ECDSA_sign(0, hash, SHA256_DIGEST_LENGTH, sig.data(), &sigLen, key);
-    return std::string(sig.begin(), sig.begin() + sigLen);
-}
+    // Default constructor — produces an invalid beacon
+    Beacon() : sender(0), round(0) {}
 
-bool verify(NodeId i, const std::string& m, const Sig& sig) {
-    EC_KEY* key = getKey(i);
-    unsigned char hash[SHA256_DIGEST_LENGTH];
-    SHA256(reinterpret_cast<const unsigned char*>(m.data()), m.size(), hash);
-    int result = ECDSA_verify(0, hash,
-        SHA256_DIGEST_LENGTH,
-        reinterpret_cast<const unsigned char*>(sig.data()),
-        static_cast<int>(sig.size()), key);
-    return result == 1;
-}
+    Beacon(NodeId s, Round r, Sig signature)
+        : sender(s), round(r), sig(std::move(signature)) {}
+};
 
-NeighProof makeNeighProof(NodeId u, NodeId v) {
-    // Mutual handshake: sign sorted (u,v) pair with both keys
-    std::string msg = std::to_string(std::min(u,v)) + ":" + std::to_string(std::max(u,v));
-    return sign(u, msg) + "|" + sign(v, msg);
-}
+// ============================================================================
+//  Token  —  τ = (u, v, π_{u,v}, β_u, β_v, d, S)
+//
+//  Certified link record. Certifies that edge (u,v) exists and both
+//  endpoints were recently active. Expires when either beacon falls
+//  outside the freshness horizon F.
+//
+//  Fields:
+//    u, v        — edge endpoints (stored with u < v for canonical form)
+//    pi_uv       — neighborhood proof, established at connection time,
+//                  unforgeable if at least one endpoint is correct
+//    beacon_u    — most recent beacon seen for u
+//    beacon_v    — most recent beacon seen for v
+//    depth       — relay hop count (d ≥ 1)
+//    chain       — ordered list of d relay signatures
+//                  chain[k] = σ_{relay_k}(u ‖ v ‖ k+1 ‖ r)
+//    signerIds   — parallel list to chain storing the NodeId of each
+//                  relay signer; used for loop prevention in the relay
+//                  step so we never send a token back to a node already
+//                  in the chain
+// ============================================================================
+struct Token {
+    NodeId   u, v;
+    NeighProof          pi_uv;
+    Beacon              beacon_u;
+    Beacon              beacon_v;
+    int                 depth;          // d ≥ 1
+    std::vector<Sig>    chain;          // relay signature chain S
+    std::vector<NodeId> signerIds;      // parallel to chain — who signed
 
-bool verifyNeighProof(NodeId u, NodeId v, const NeighProof& proof) {
-    auto sep = proof.find('|');
-    if (sep == std::string::npos) return false;
-    std::string msg = std::to_string(std::min(u,v)) + ":" + std::to_string(std::max(u,v));
-    return verify(u, proof.substr(0, sep), msg) ||
-           verify(v, proof.substr(sep+1), msg);
-}
+    // Default constructor
+    Token() : u(0), v(0), depth(0) {}
 
-std::string concat(NodeId id, Round r) {
-    return std::to_string(id) + "||" + std::to_string(r);
-}
-std::string concat(NodeId u, NodeId v, int depth, Round r) {
-    return std::to_string(u) + "||" + std::to_string(v)
-         + "||" + std::to_string(depth) + "||" + std::to_string(r);
-}
+    Token(NodeId u_, NodeId v_,
+          NeighProof proof,
+          Beacon bu, Beacon bv,
+          int d,
+          std::vector<Sig> s,
+          std::vector<NodeId> ids)
+        : u(u_), v(v_)
+        , pi_uv(std::move(proof))
+        , beacon_u(std::move(bu))
+        , beacon_v(std::move(bv))
+        , depth(d)
+        , chain(std::move(s))
+        , signerIds(std::move(ids))
+    {}
+};
+
+// ============================================================================
+//  MsgKind  —  discriminator for CharonMsg
+// ============================================================================
+enum class MsgKind {
+    BEACON,
+    TOKEN
+};
+
+// ============================================================================
+//  CharonMsg  —  the single message type exchanged between nodes
+//
+//  Used as the in-memory representation. Serialized to/from cMessage
+//  by the wire format in serialization.h before being sent over OMNeT++
+//  gates.
+// ============================================================================
+struct CharonMsg {
+    MsgKind kind;
+    Beacon  beacon;   // valid when kind == BEACON
+    Token   token;    // valid when kind == TOKEN
+
+    // Convenience constructors
+    static CharonMsg makeBeacon(Beacon b) {
+        CharonMsg m;
+        m.kind   = MsgKind::BEACON;
+        m.beacon = std::move(b);
+        return m;
+    }
+
+    static CharonMsg makeToken(Token t) {
+        CharonMsg m;
+        m.kind  = MsgKind::TOKEN;
+        m.token = std::move(t);
+        return m;
+    }
+};
 
 } // namespace charon

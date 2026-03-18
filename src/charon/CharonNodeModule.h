@@ -13,18 +13,23 @@ protected:
     void finish() override;
 
 private:
-    charon::CharonNode* algo_     = nullptr;
-    int     t_, c_, deltaMax_;
-    charon::Round round_          = 0;
+    charon::CharonNode* algo_      = nullptr;
+    int           t_               = 0;
+    int           c_               = 0;
+    int           deltaMax_        = 0;
+    charon::Round round_           = 0;
 
-    std::vector<charon::CharonMsg> inbox_;
-    std::map<charon::NodeId, int>  gateMap_;
-    cMessage* roundTick_          = nullptr;
+    std::vector<charon::CharonMsg>         inbox_;
+    std::map<charon::NodeId, int>          gateMap_;
+    std::map<charon::NodeId,
+             charon::NeighProof>           neighProofMap_; // ← NEW
+    cMessage*                              roundTick_ = nullptr;
 
-    // OMNeT++ statistics signals
     simsignal_t decision_signal_;
-    simsignal_t msgCount_signal_;
+    simsignal_t msgSent_signal_;
+    simsignal_t anchorSize_signal_;                        // ← NEW
 
     void startNextRound();
     void recordStats(int msgsSent);
+    void applyChurn(charon::Round r);                      // ← NEW
 };
