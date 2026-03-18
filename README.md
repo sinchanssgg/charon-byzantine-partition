@@ -8,20 +8,6 @@ Charon is the first strictly-stabilizing Byzantine fault-tolerant algorithm for 
 
 ---
 
-## Table of Contents
-
-- [Overview](#overview)
-- [Key Concepts](#key-concepts)
-- [Project Structure](#project-structure)
-- [Prerequisites](#prerequisites)
-- [Topologies](#topologies)
-- [Byzantine Behaviors](#byzantine-behaviors)
-- [Algorithm Parameters](#algorithm-parameters)
-- [VS Code Setup](#vs-code-setup)
-- [License](#license)
-
----
-
 ## Overview
 
 Distributed systems operating over dynamic networks face three fundamental challenges that Charon addresses simultaneously:
@@ -98,19 +84,6 @@ charon-byzantine-partition/
 ```
 
 ---
-
-## Prerequisites
-
-### Required
-
-| Tool | Version | Purpose |
-|---|---|---|
-| GCC or Clang | ≥ 9 | C++17 compiler |
-| CMake | ≥ 3.16 | Build system |
-| OpenSSL | ≥ 1.1 | ECDSA signatures |
-| OMNeT++ | 6.x | Discrete-event simulator |
-| Docker | ≥ 20 | Containerized simulation |
-| Git | any | Version control |
 
 ### Installing dependencies on Ubuntu/Debian
 ```bash
@@ -301,51 +274,6 @@ W = 4(t + c) + 2             # Stabilization window
 | t=50, c=5, δmax=8 | W + δmax = 222 + 8 = 230 rounds |
 
 If the actual diameter exceeds `δmax`, tokens may expire before reaching all nodes. This increases convergence delay but does **not** violate correctness — nodes simply output `Partitionable` conservatively until tokens arrive.
-
----
-
-## VS Code Setup
-
-### Recommended extensions
-
-| Extension | Purpose |
-|---|---|
-| C/C++ (Microsoft) | IntelliSense and debugging |
-| CMake Tools (Microsoft) | Build system integration |
-| Docker (Microsoft) | Container management |
-| GitLens (GitKraken) | Enhanced Git history |
-| Remote - Containers (Microsoft) | Develop inside Docker |
-
-### Useful keyboard shortcuts
-
-| Shortcut | Action |
-|---|---|
-| `Ctrl+Shift+B` | Build (runs CMake build task) |
-| `F5` | Start debugger |
-| `Ctrl+Shift+P` | Command palette |
-| `Ctrl+P` | Open file by name |
-| `F12` | Go to definition |
-| `Ctrl+Shift+F` | Search across all files |
-| `Ctrl+`` ` | Toggle integrated terminal |
-
-### VS Code tasks
-
-A `.vscode/tasks.json` is included with these pre-configured tasks accessible via `Ctrl+Shift+P` → **Tasks: Run Task**:
-
-- **CMake Configure** — runs `cmake -B build`
-- **CMake Build** — runs `cmake --build build`
-- **Run Simulation (ER baseline)** — runs the ER baseline scenario
-- **Docker Compose Up** — builds and starts all Docker containers
-
----
-
-
-### Code style
-
-- C++17 throughout
-- 4-space indentation
-- All public functions documented with a comment block
-- New Byzantine behaviors should be added to the `ByzBehavior` enum in `node.h` and handled in `runRound` in `node.cpp`
 
 ---
 
